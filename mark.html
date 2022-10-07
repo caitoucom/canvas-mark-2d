@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>画线</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #999;
+        }
+
+        .canvasBox {
+            width: 900px;
+            height: 600px;
+            background: #fff;
+            margin: 0 auto;
+        }
+
+        .btn-box {
+            text-align: center;
+            padding: 15px 0px;
+        }
+
+        .btn-box button {
+            padding: 3px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="btn-box">
+        <button id="btn1">画矩形</button>
+        <button id="btn2">画多边形</button>
+        <button id="btn3">输出标注结果</button>
+    </div>
+    <div class="canvasBox" id="canvasBox"></div>
+
+</body>
+
+</html>
+<script type="module">
+    import DrawJs from "./main.js"
+    let el = document.getElementById('canvasBox')
+    const mk = new DrawJs({
+        el: el,
+        imgSrc: './10008340.jpg'
+    })
+    document.getElementById('btn1').onclick = function() {
+        mk.drawType = 1
+    }
+    document.getElementById('btn2').onclick = function() {
+        mk.drawType = 2
+    }
+    document.getElementById('btn3').onclick = function() {
+        console.log(mk.markData)
+    }
+
+    let arr = [1, 2, 3, 4]
+    arr.splice(arr.length - 1 , 1, 5)
+    console.log(arr)
+</script>
