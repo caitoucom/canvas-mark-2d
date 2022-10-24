@@ -29,9 +29,14 @@ class DrawJs {
         this.eventBindDrawJs()
         this.bindEvent()
     }
-
     get activeShape() {
         return this.markData.find((item) => item.active);
+    }
+    get scale() {
+        if (this.imageOriginWidth && this.imageWidth) {
+            return this.imageWidth / this.imageOriginWidth;
+        }
+        return 1;
     }
     // 初始化
     init(url = '') {
@@ -112,6 +117,7 @@ class DrawJs {
                     item.active = false;
                 })
                 const crePoint = [x - this.originX / this.scale, y - this.originY / this.scale]
+                console.log(crePoint)
                 // 新建形状
                 let newShape = null;
                 if(this.drawType == 1){
@@ -125,6 +131,7 @@ class DrawJs {
                 newShape.creating = true;
                 newShape.active = true;
                 this.markData.push(newShape)
+                console.log(this.markData,'====<')
             }else if(this.activeShape){
                 this.activeShape.active = false;
             }
