@@ -19,6 +19,7 @@ class DrawJs {
     imageOriginHeight = 0
     originX = 0;
     originY = 0;
+    remmber = [];
 
     constructor(opt = {}) {
         this.el = opt.el
@@ -76,7 +77,8 @@ class DrawJs {
         this.canvasEl.addEventListener('mousemove', this.canvasMouseMove)
         this.canvasEl.addEventListener('mouseup', this.canvasMouseUp)
         this.canvasEl.addEventListener('dblclick', this.canvasDblclick)
-        this.canvasEl.addEventListener('mousewheel', this.canvasMouseWheel);
+        this.canvasEl.addEventListener('mousewheel', this.canvasMouseWheel)
+        this.canvasEl.addEventListener('contextmenu', this.canvasContextmenu)
     }
     // 将this指向DrawJS实例
     eventBindDrawJs() {
@@ -85,11 +87,14 @@ class DrawJs {
         this.canvasMouseUp = this.canvasMouseUp.bind(this)
         this.canvasDblclick = this.canvasDblclick.bind(this)
         this.canvasMouseWheel = this.canvasMouseWheel.bind(this)
+        this.canvasContextmenu = this.canvasContextmenu.bind(this)
     }
     canvasMouseDown(e) {
-        let { x, y } = toCanvasPos(e, this.canvasEl)
         const mousePoint = [e.offsetX, e.offsetY];
-        
+
+        const offsetX = e.offsetX / this.scale;
+        const offsetY = e.offsetY / this.scale;
+
         if(e.buttons == 1){
             let oncreating = false;
             if(this.activeShape && this.activeShape.type == 2 && this.activeShape.creating){
@@ -101,6 +106,10 @@ class DrawJs {
                 this.markData.forEach((item, i) => {
                     item.active = i === targetShapeIndex;
                 })
+                targetShape.dragging = true
+                targetShape.coor.forEach((pt) => {
+                    this.remmber.push([offsetX - pt[0], offsetY - pt[1]]);
+                });
                 this.update()
                 return;
             }else if(oncreating){
@@ -108,16 +117,16 @@ class DrawJs {
                 if(this.activeShape.type == 2){
                     let len = this.activeShape.coor.length
                     let lastcor = this.activeShape.coor[len - 1]
-                    if(x != lastcor[0] && y != lastcor[1]) {
-                        this.activeShape.coor.push([x - this.originX / this.scale, y - this.originY / this.scale]);
+                    if(offsetX != lastcor[0] && offsetY != lastcor[1]) {
+                        this.activeShape.coor.push([offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
                     }
                 }
             }else if(this.drawType){
                 this.markData.forEach((item, i) => {
                     item.active = false;
                 })
-                const crePoint = [x - this.originX / this.scale, y - this.originY / this.scale]
-                console.log(crePoint)
+                const crePoint = [offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]
+
                 // 新建形状
                 let newShape = null;
                 if(this.drawType == 1){
@@ -131,7 +140,6 @@ class DrawJs {
                 newShape.creating = true;
                 newShape.active = true;
                 this.markData.push(newShape)
-                console.log(this.markData,'====<')
             }else if(this.activeShape){
                 this.activeShape.active = false;
             }
@@ -139,17 +147,31 @@ class DrawJs {
         this.update()
     }
     canvasMouseMove(e) {
-        let {x, y} = toCanvasPos(e, this.canvasEl)
-        this.printMove.x = x;
-        this.printMove.y = y;
+        // let {x, y} = toCanvasPos(e, this.canvasEl)
+        
+
+        const offsetX = e.offsetX / this.scale;
+        const offsetY = e.offsetY / this.scale;
+
+        this.printMove.x = offsetX;
+        this.printMove.y = offsetY;
 
         if(e.buttons === 1){
             if(this.activeShape){
-                let type = this.activeShape.type;
-                switch(type){
-                    case 1:
-                        this.activeShape.coor.splice(1, 1, [x, y]);
-                        break;
+                if(this.activeShape.dragging){
+                    let coor = [];
+                    const w = this.imageOriginWidth || this.canvasWidth;
+                    const h = this.imageOriginHeight || this.canvasHeight;
+                    for (let i = 0; i < this.activeShape.coor.length; i++) {
+                        const tar = this.remmber[i];
+                        const x = offsetX - tar[0];
+                        const y = offsetY - tar[1];
+                        if (x < 0 || x > w || y < 0 || y > h) return;
+                        coor.push([x, y]);
+                    }
+                    this.activeShape.coor = coor;
+                }else if(this.activeShape.type == 1 && this.activeShape.creating){
+                    this.activeShape.coor.splice(1, 1, [offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
                 }
             }
         }
@@ -157,6 +179,7 @@ class DrawJs {
         this.drawSubline(x, y)
     }
     canvasMouseUp(e) {
+        this.remmber = [];
         if(this.activeShape && this.activeShape.type == 1 && this.activeShape.creating){
             this.activeShape.creating = false;
             this.activeShape.active = false;
@@ -174,6 +197,9 @@ class DrawJs {
         e.preventDefault();
         this.setScale(e.deltaY < 0);
     }
+    canvasContextmenu(e) {
+        e.preventDefault();
+    }
     /**
      * 绘制图片
     */
@@ -184,7 +210,7 @@ class DrawJs {
      * 绘制矩形
      */
     drawRect(shape) {
-        const [[x0, y0], [x1, y1]] = shape.coor;
+        const [[x0, y0], [x1, y1]] = shape.coor.map((a) => a.map((b) => Math.round(b * this.scale)));
         this.ctx.save()
 
         this.ctx.fillStyle = this.defaultFillStyle;
@@ -209,15 +235,16 @@ class DrawJs {
         this.ctx.beginPath()
         let coor = shape.coor;
         coor.forEach((item, i)=>{
+            const [x, y] = item.map((a) => Math.round(a * this.scale));
             if(i === 0){
-                this.ctx.moveTo(item[0], item[1])
+                this.ctx.moveTo(x, y)
             }else{
-                this.ctx.lineTo(item[0], item[1])
+                this.ctx.lineTo(x, y)
             }
         })
 
         if (shape.creating) {
-            this.ctx.lineTo(this.printMove.x, this.printMove.y);
+            this.ctx.lineTo(this.printMove.x * this.scale - this.originX, this.printMove.y * this.scale - this.originY);
         } else if (coor.length > 2) {
             this.ctx.closePath();
         }
@@ -232,7 +259,7 @@ class DrawJs {
      * @param point 坐标
     */
     drawCtrl(point, activePt) {
-        const [x, y] = point.map((a) => a);
+        const [x, y] = point.map((a) => a * this.scale);
         this.ctx.save();
         this.ctx.beginPath();
         this.ctx.fillStyle = '#fff';
@@ -274,7 +301,7 @@ class DrawJs {
         this.ctx.stroke();
     }
     /**
-     * 判断是非在标注实例上
+     * 判断是否在标注实例上
      * @param mousePoint 点击位置
      * @returns 
     */
@@ -297,8 +324,8 @@ class DrawJs {
     */
     isPointInRect(point, coor) {
         const [x, y] = point;
-        const [[x0, y0], [x1, y1]] = coor.map((a) => a.map((b) => b));
-        return x0 <= x && x <= x1 && y0 <= y && y <= y1;
+        const [[x0, y0], [x1, y1]] = coor.map((a) => a.map((b) => b * this.scale));
+        return x0 + this.originX <= x && x <= x1 + this.originX && y0 + this.originY <= y && y <= y1 + this.originY;
     }
     /**
      * 判断是否在多边形内
@@ -309,10 +336,11 @@ class DrawJs {
     isPointInPolygon(point, coor) {
         this.offlineCtx.save();
         this.offlineCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.offlineCtx.translate(this.originX, this.originY);
         this.offlineCtx.beginPath();
         this.offlineCtx.fillStyle = '#FFFFFF'
         coor.forEach((pt, i) => {
-            const [x, y] = pt.map((a) => Math.round(a));
+            const [x, y] = pt.map((a) => Math.round(a * this.scale));
             if (i === 0) {
                 this.offlineCtx.moveTo(x, y);
             } else {
@@ -324,7 +352,6 @@ class DrawJs {
 
         const areaData = this.offlineCtx.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
         const index = (point[1] - 1) * this.canvasWidth * 4 + point[0] * 4;
-        console.log(areaData.data, index, '======<')
         this.offlineCtx.restore();
         return areaData.data[index + 3] !== 0;
     }

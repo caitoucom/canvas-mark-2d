@@ -5,6 +5,7 @@ class Polygon{
     uuid = '';
     color = '';
     creating = false;
+    dragging = false;
     active = false;
     constructor() {
         

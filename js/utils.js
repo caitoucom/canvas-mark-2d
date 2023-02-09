@@ -18,7 +18,7 @@ export function createUuid() {
 /**
  * 计算再画布中的真实位置
 */
-export function toCanvasPos(e, canvasEl) {
+export function toCanvasPos(e, canvasEl, scale) {
     let { top, left } = canvasEl.getBoundingClientRect()
     let cx = e.clientX
     let cy = e.clientY

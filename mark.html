@@ -14,13 +14,13 @@
         }
 
         body {
-            background: #999;
+            background: #444;
         }
 
         .canvasBox {
             width: 900px;
             height: 600px;
-            background: #fff;
+            background: #555;
             margin: 0 auto;
         }
 
@@ -47,11 +47,11 @@
 
 </html>
 <script type="module">
-    import DrawJs from "./main.js"
+    import DrawJs from "./js/main.js"
     let el = document.getElementById('canvasBox')
     const mk = new DrawJs({
         el: el,
-        imgSrc: './10008340.jpg'
+        imgSrc: './img/10008340.jpg'
     })
     document.getElementById('btn1').onclick = function() {
         mk.drawType = 1
@@ -62,8 +62,4 @@
     document.getElementById('btn3').onclick = function() {
         console.log(mk.markData)
     }
-
-    let arr = [1, 2, 3, 4]
-    arr.splice(arr.length - 1 , 1, 5)
-    console.log(arr)
 </script>
