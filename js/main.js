@@ -1,6 +1,7 @@
 import { Rect } from "./Rect.js"
 import { Polygon } from "./Polygon.js"
 import { createUuid, toCanvasPos } from "./utils.js"
+import { initEvent } from "./Event.js"
 
 class DrawJs {
     drawType = 1;  // 当前绘制的类型1矩形, 2多边形
@@ -29,6 +30,7 @@ class DrawJs {
         this.init(opt.imgSrc)
         this.eventBindDrawJs()
         this.bindEvent()
+        initEvent(this)
     }
     get activeShape() {
         return this.markData.find((item) => item.active);
@@ -230,6 +232,7 @@ class DrawJs {
     canvasMouseUp(e) {
         this.remmber = [];
         if(this.activeShape && this.activeShape.type == 1 && this.activeShape.creating){
+            this.emit('add', this.activeShape)
             this.activeShape.creating = false;
             this.activeShape.active = false;
         }
@@ -237,6 +240,7 @@ class DrawJs {
     canvasDblclick(e) {
         if(this.activeShape){
             if(this.activeShape.type === 2 && this.activeShape.creating){
+                this.emit('add', this.activeShape)
                 this.activeShape.creating = false;
                 this.activeShape.active = false;
             }
