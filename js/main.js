@@ -102,6 +102,12 @@ class DrawJs {
             }
             // 是否点击到形状
             const [targetShapeIndex, targetShape] = this.clickOnShape(mousePoint);
+
+            // 点击到控制点
+            const ctrls = this.activeShape?.ctrlsData || [];
+            console.log(ctrls)
+            // this.ctrlIndex = ctrls.findIndex((coor) => this.isPointInRect(mousePoint, coor));
+
             if(!oncreating && targetShapeIndex != -1){
                 this.markData.forEach((item, i) => {
                     item.active = i === targetShapeIndex;
@@ -147,9 +153,8 @@ class DrawJs {
         this.update()
     }
     canvasMouseMove(e) {
-        // let {x, y} = toCanvasPos(e, this.canvasEl)
+        let {x, y} = toCanvasPos(e, this.canvasEl)
         
-
         const offsetX = e.offsetX / this.scale;
         const offsetY = e.offsetY / this.scale;
 
