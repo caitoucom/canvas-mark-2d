@@ -105,8 +105,13 @@ class DrawJs {
 
             // 点击到控制点
             const ctrls = this.activeShape?.ctrlsData || [];
-            console.log(ctrls)
-            // this.ctrlIndex = ctrls.findIndex((coor) => this.isPointInRect(mousePoint, coor));
+            this.ctrlIndex = ctrls.findIndex((coor) => this.isPointInRect(mousePoint, coor, true));
+            if (this.ctrlIndex > -1) {
+                const [x0, y0] = ctrls[this.ctrlIndex];
+                this.remmber = [[offsetX - x0, offsetY - y0]];
+                this.update();
+                return;
+            }
 
             if(!oncreating && targetShapeIndex != -1){
                 this.markData.forEach((item, i) => {
@@ -163,7 +168,46 @@ class DrawJs {
 
         if(e.buttons === 1){
             if(this.activeShape){
-                if(this.activeShape.dragging){
+                if (this.ctrlIndex > -1){
+                    const [[x, y]] = this.remmber;
+                    if (this.activeShape.type === 1) {
+                        const [[x0, y0], [x1, y1]] = this.activeShape.coor;
+                        let coor = [];
+                        switch (this.ctrlIndex) {
+                          case 0:
+                            coor = [[offsetX - x, offsetY - y], [x1, y1]];
+                            break;
+                          case 1:
+                            coor = [[x0, offsetY - y], [x1, y1]];
+                            break;
+                          case 2:
+                            coor = [[x0, offsetY - y], [offsetX - x, y1]];
+                            break;
+                          case 3:
+                            coor = [[x0, y0], [offsetX - x, y1]];
+                            break;
+                          case 4:
+                            coor = [[x0, y0], [offsetX - x, offsetY - y]];
+                            break;
+                          case 5:
+                            coor = [[x0, y0], [x1, offsetY - y]];
+                            break;
+                          case 6:
+                            coor = [[offsetX - x, y0], [x1, offsetY - y]];
+                            break;
+                          case 7:
+                            coor = [[offsetX - x, y0], [x1, y1]];
+                            break;
+                          default:
+                            break;
+                        }
+          
+                        this.activeShape.coor = coor;
+
+                      } else if (this.activeShape.type === 2) {
+                        this.activeShape.coor.splice(this.ctrlIndex, 1, [offsetX - this.originX / this.scale, offsetY - this.originY / this.scale]);
+                      }
+                }else if(this.activeShape.dragging){
                     let coor = [];
                     const w = this.imageOriginWidth || this.canvasWidth;
                     const h = this.imageOriginHeight || this.canvasHeight;
@@ -327,10 +371,18 @@ class DrawJs {
      * @param coor 区域坐标
      * @return 布尔值
     */
-    isPointInRect(point, coor) {
+    isPointInRect(point, coor, ctrlState) {
         const [x, y] = point;
-        const [[x0, y0], [x1, y1]] = coor.map((a) => a.map((b) => b * this.scale));
-        return x0 + this.originX <= x && x <= x1 + this.originX && y0 + this.originY <= y && y <= y1 + this.originY;
+        if(ctrlState){
+            const x0 = (coor[0]-5) * this.scale
+            const y0 = (coor[1]-5) * this.scale
+            const x1 = (coor[0]+5) * this.scale
+            const y1 = (coor[1]+5) * this.scale
+            return x0 + this.originX <= x && x <= x1 + this.originX && y0 + this.originY <= y && y <= y1 + this.originY;
+        }else{
+            const [[x0, y0], [x1, y1]] = coor.map((a) => a.map((b) => b * this.scale));
+            return x0 + this.originX <= x && x <= x1 + this.originX && y0 + this.originY <= y && y <= y1 + this.originY;
+        }
     }
     /**
      * 判断是否在多边形内
